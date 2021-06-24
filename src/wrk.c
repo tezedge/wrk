@@ -426,6 +426,7 @@ static void socket_writeable(aeEventLoop *loop, int fd, void *data, int mask) {
 static void socket_readable(aeEventLoop *loop, int fd, void *data, int mask) {
     connection *c = data;
     size_t n;
+    size_t l = 0;
 
     do {
         switch (sock.read(c, &n)) {
@@ -433,6 +434,7 @@ static void socket_readable(aeEventLoop *loop, int fd, void *data, int mask) {
             case ERROR: goto error;
             case RETRY: return;
         }
+        if (l++ == 0 && n == 0) continue;
 
         if (http_parser_execute(&c->parser, &parser_settings, c->buf, n) != n) goto error;
         if (n == 0 && !http_body_is_final(&c->parser)) goto error;
